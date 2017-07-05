@@ -1,4 +1,23 @@
+# Path vars
 
+PRJ_NAME	= mqtt-cpp
+
+BUILDDIR 	?= ../build-$(PRJ_NAME)
+OBJDIR 		= $(BUILDDIR)/obj
+SRCDIR 		= src
+APPDIR 		= app
+EXECUTABLE 	= cpp-mqtt
+
+APPSRC 	:= $(shell find $(APPDIR) -name '*.cpp')
+SOURCES := $(shell find $(SRCDIR) -name '*.cpp') $(APPSRC)
+SRCDIRS := $(shell find . -name '*.cpp' -exec dirname {} \; | uniq)
+OBJS 	:= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SOURCES))
+
+# Compiler and linker vars
+
+INC 		+= -Isrc
+CXXFLAGS 	+= -Wall -std=c++11
+LDLIBS 		+= -lpaho-mqttpp3
 
 ifdef DEBUG
   CPPFLAGS += -DDEBUG
@@ -8,19 +27,27 @@ else
   CXXFLAGS += -O2
 endif
 
-CXXFLAGS += -Wall -std=c++11
-LDLIBS += -lpaho-mqttpp3
+all: dir $(EXECUTABLE)
 
-all: async_publish
+dir:
+	mkdir -p $(BUILDDIR)
+	@for dir in $(patsubst ./%,%,$(SRCDIRS)); do \
+		mkdir -p $(OBJDIR)/$$dir; \
+	done
 
-async_publish: main.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $< $(LDLIBS) 
+$(EXECUTABLE): $(BUILDDIR)/$(EXECUTABLE)
+
+$(BUILDDIR)/$(EXECUTABLE): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDLIBS)
+
+$(OBJDIR)/%.o: %.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC) -c $< -o $@
 	
 # Cleanup
 
 .PHONY: clean distclean
 
 clean:
-	rm -f $(TGTS)
+	rm -rf $(BUILDDIR)/*
 
 distclean: clean

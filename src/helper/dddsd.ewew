@@ -1,0 +1,112 @@
+/*
+ * ConParams.cpp
+ *
+ *  Created on: 6 июл. 2017 г.
+ *      Author: krautcat
+ */
+
+#include <helper/params.hpp>
+
+template <class Defaults>
+ConParams <Defaults>::ConParams() {
+    Defaults def;
+    __ip = def.getIp();
+    __port = def.getPort();
+    __proto = def.getProto();
+}
+
+template <class Defaults>
+ConParams <Defaults>::ConParams(std::string ip) :
+        __ip(ip) {
+    Defaults def;
+    __port = def.getPort();
+    __proto = def.getProto();
+}
+
+template <class Defaults>
+ConParams <Defaults>::ConParams(std::string ip, unsigned int port) :
+        __ip(ip), __port(port) {
+    Defaults def;
+    __proto = def.getProto();
+}
+
+template <class Defaults>
+ConParams <Defaults>::~ConParams() {
+}
+
+template <class Defaults>
+void ConParams <Defaults>::setProto(std::string proto) {
+    __proto = proto;
+}
+
+template <class Defaults>
+void ConParams <Defaults>::setIp(std::string ip) {
+    __ip = ip;
+}
+
+template <class Defaults>
+void ConParams <Defaults>::setPort(unsigned int port) {
+    __port = port;
+}
+
+template <class Defaults>
+const std::string ConParams <Defaults>::setAddr(std::string ip, unsigned int port) {
+    setIp(ip);
+    setPort(port);
+    return getServerAddr();
+}
+
+template <class Defaults>
+const std::string ConParams <Defaults>::getServerAddr() {
+    return __proto + "://" + __ip + ":" + std::to_string(__port);
+}
+
+//
+
+template<class Defaults>
+TopicParams <Defaults>::TopicParams() {
+    Defaults def;
+    __deveui = def.getDeveui();
+    __devices = def.getDevices();
+
+}
+
+template<class Defaults>
+TopicParams <Defaults>::TopicParams(std::string &deveui) :
+        __deveui(deveui) {
+    Defaults def;
+    __devices = def.getDevices();
+}
+
+template<class Defaults>
+TopicParams <Defaults>::TopicParams(std::string &deveui,
+        std::vector <std::string> &devices) :
+        __deveui(deveui), __devices(devices) {
+}
+
+template<class Defaults>
+TopicParams <Defaults>::~TopicParams() {
+}
+
+template<class Defaults>
+void TopicParams <Defaults>::setDevEui(std::string& eui) {
+    __deveui = eui;
+}
+
+template<class Defaults>
+void TopicParams <Defaults>::setDevices(std::string devices[], size_t num_devices) {
+    for (size_t n = 0; n++; n < num_devices) {
+        __devices.push_back(devices[n]);
+    }
+}
+
+template<class Defaults>
+void TopicParams <Defaults>::setDevices(std::vector <std::string>& dev_vector) {
+    __devices = dev_vector;
+}
+
+template<class Defaults>
+std::tuple <std::string, std::vector <std::string> > TopicParams <Defaults>::getParams() {
+    return std::make_tuple(__deveui, __devices);
+}
+

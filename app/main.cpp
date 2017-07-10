@@ -1,18 +1,30 @@
-#include <iostream>
-#include <string>
-#include <chrono>
-#include <thread>
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
 
+#include <iostream>
+#include <string>
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <regex>
+
 #include "mqtt/async_client.h"
 
-#include "helper/arg_parser.hpp"
+#include <jsoncpp/json/json.h>
+#include <jsoncpp/json/value.h>
+#include <jsoncpp/json/reader.h>
+#include <jsoncpp/json/writer.h>
 
-const std::string SERVER_ADDRESS { "tcp://106.109.130.18:1883" };
+//#include <SFML/Window/Window.hpp>
+
+#include "helper/arg_parser.hpp"
+#include "helper/json_helpers.hpp"
+#include "helper/params.hpp"
+#include "helper/default_params.hpp"
+
 const std::string CLIENT_ID { "sync_consume_cpp" };
-const std::string TOPIC { "devices/lora" };
+const std::string TOPIC { "devices/lora/#" };
 
 const int QOS = 1;
 const char NUM_RETRY_ATTEMPTS = 5;
@@ -118,20 +130,88 @@ class Callback : public virtual mqtt::callback,
             std::cout << "\ttopic: '" << msg->get_topic() << "'" << std::endl;
             std::cout << "\tpayload: '" << msg->to_string() << "'\n"
                     << std::endl;
+
+            std::string topic = msg->get_topic();
+            std::vector <std::string> topic_strings = jsonHelper::split(topic,
+                    '/');
+            std::string lora_deveui = topic_strings[2];
+            std::string device = topic_strings[3];
+
+            Json::Value root;
+            Json::Reader json_reader;
+
+            if (device == "opt3001") {
+                if (json_reader.parse(msg->to_string(), root)) {
+                    std::cout << "Luminocity:\t" << root["data"]["luminocity"]
+                            << std::endl;
+                }
+            } else if (device == "adc") {
+                if (json_reader.parse(msg->to_string(), root)) {
+                    std::cout << "Humidity:\t"
+                            << root["data"]["adc2"].asString() << std::endl;
+                    std::cout << "Temperature:\t"
+                            << root["data"]["adc3"].asString() << std::endl;
+                }
+            }
         }
 
         void delivery_complete(mqtt::delivery_token_ptr token) override {
         }
 };
 
-int main(int argc, char* argv[]) {
-    ArgParser parser(argc, argv);
+int main(int argc, const char* argv[]) {
+    ConParams<DefaultConParams> *mqtt_conn_params = nullptr;
+    TopicParams<DefaultTopicParams> *mqtt_topic_params = nullptr;
+
+    ArgumentParser parser;
+    parser.addArgument("--proto", 1);
+    parser.addArgument("--ip", 1);
+    parser.addArgument("--port", 1);
+    parser.addArgument("--uuid", 1);
+    parser.addArgument("--type", "+");
+    parser.parse(argc, argv);
+
+    std::string proto = "", ip = "", uuid = "";
+    unsigned int port = 0;
+    std::vector <std::string> type = {};
+    try {
+//        proto = parser.retrieve <std::string> ("proto");
+        ip = parser.retrieve <std::string> ("ip");
+//        port = parser.retrieve <unsigned int> ("port");
+    } catch (const std::out_of_range &e) {
+        if (proto.empty() && ip.empty() && !port) {
+            mqtt_conn_params = new ConParams<DefaultConParams>();
+        } else if (!ip.empty() && !port) {
+            mqtt_conn_params = new ConParams<DefaultConParams>(ip);
+        } else if (!ip.empty() && port) {
+            mqtt_conn_params = new ConParams<DefaultConParams>(ip, port);
+        }
+    }
+    if (mqtt_conn_params == nullptr) {
+        mqtt_conn_params = new ConParams<DefaultConParams>(ip);
+    }
+
+    try {
+        uuid = parser.retrieve <std::string> ("uuid");
+        //type = parser.retrieve <std::vector <std::string>> ("type");
+    } catch (const std::out_of_range &e) {
+        if (uuid.empty() && type.empty()) {
+            mqtt_topic_params = new TopicParams<DefaultTopicParams>();
+        } else if (!uuid.empty() && type.empty()) {
+            mqtt_topic_params = new TopicParams<DefaultTopicParams>(uuid);
+        }
+    }
+    if (mqtt_topic_params == nullptr) {
+        mqtt_topic_params = new TopicParams<DefaultTopicParams>(uuid, type);
+    }
 
     mqtt::connect_options connOpts;
     connOpts.set_keep_alive_interval(20);
     connOpts.set_clean_session(true);
 
-    mqtt::async_client client(SERVER_ADDRESS, CLIENT_ID);
+    std::cout << mqtt_conn_params->getServerAddr();
+
+    mqtt::async_client client(mqtt_conn_params->getServerAddr(), CLIENT_ID);
 
     Callback cb(client, connOpts);
     client.set_callback(cb);
@@ -144,9 +224,12 @@ int main(int argc, char* argv[]) {
         client.connect(connOpts, nullptr, cb);
     } catch (const mqtt::exception&) {
         std::cerr << "\nERROR: Unable to connect to MQTT server: '"
-                << SERVER_ADDRESS << "'" << std::endl;
+                << mqtt_conn_params->getServerAddr() << "'" << std::endl;
         return 1;
     }
+
+//    sf::Window window;
+//    window.create(sf::VideoMode(800, 600), "My window");
 
     // Just block till user tells us to quit.
 
@@ -163,6 +246,10 @@ int main(int argc, char* argv[]) {
         std::cerr << exc.what() << std::endl;
         return 1;
     }
+
+    // Подчищаем динамически выделенную память
+    delete mqtt_conn_params;
+    delete mqtt_topic_params;
 
     return 0;
 }

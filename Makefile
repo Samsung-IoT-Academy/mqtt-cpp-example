@@ -2,35 +2,59 @@
 
 PRJ_NAME	= mqtt-cpp
 
-BUILDDIR 	?= ../build-$(PRJ_NAME)
+BUILDPATH	?= ..
+BUILDPREFIX	?= build-
+
+BUILDDIR 	= $(BUILDPATH)/$(BUILDPREFIX)$(PRJ_NAME)
 OBJDIR 		= $(BUILDDIR)/obj
 SRCDIR 		= src
 APPDIR 		= app
 EXECUTABLE 	= cpp-mqtt
 
+HDRSRC	:= $(SRCDIR)/helper/default_params.hpp
 APPSRC 	:= $(shell find $(APPDIR) -name '*.cpp')
-SOURCES := $(shell find $(SRCDIR) -name '*.cpp') $(APPSRC)
-SRCDIRS := $(shell find . -name '*.cpp' -exec dirname {} \; | uniq)
+SOURCES := $(shell find $(SRCDIR) -name '*.cpp') $(APPSRC) $(HDRSRC)
+SRCDIRS := $(shell find . -not -path 'test' -name '*.cpp' -exec dirname {} \; | uniq)
 OBJS 	:= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SOURCES))
 
-# Compiler and linker vars
+# -----------------------------------------------------------------------------
+# Variables for testing
+BUILDDIR_TEST	= $(BUILDDIR)
+OBJDIR_TEST		= $(BUILDDIR)/obj-test
+TESTDIR			= test
+EXEC_SERVER		= cpp-mqtt-server
 
+TESTSRC				:= $(shell find $(TESTDIR) -not -path 'server' -name '*.cpp')
+TESTOBJS 			:= $(patsubst %.cpp,$(OBJDIR_TEST)/%.o,$(TESTSRC))
+DIR_EXEC_SERVER		:= $(TESTDIR)/server
+SRC_EXEC_SERVER		:= $(shell find $(DIR_EXEC_SERVER) -name '*.cpp') \
+	$(shell find $(SRCDIR) -name '*.cpp' -exec dirname {} \; | uniq)
+OBJS_EXEC_SERVER	:= $(patsubst %.cpp,$(OBJDIR_TEST)/%.0,$(DIR_EXEC_SERVER))
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Compiler and linker vars
 INC 		+= -Isrc
 CXXFLAGS 	+= -Wall -std=c++11
-LDLIBS 		+= -lpaho-mqttpp3
+LDLIBS 		+= -lpaho-mqttpp3 -ljsoncpp -lsfml-window
 
 ifdef DEBUG
-  CPPFLAGS += -DDEBUG
-  CXXFLAGS += -g -O0
+	CPPFLAGS += -DDEBUG
+	CXXFLAGS += -g -O0
 else
-  CPPFLAGS += -D_NDEBUG
-  CXXFLAGS += -O2
+	CPPFLAGS += -D_NDEBUG
+	CXXFLAGS += -O2
 endif
+# Compiler and linker vars for test
+INC_TEST	+= $(INC) -Itest
+# -----------------------------------------------------------------------------
+
+.PHONY: clean distclean all
 
 all: dir $(EXECUTABLE)
 
 dir:
-	mkdir -p $(BUILDDIR)
+	@mkdir -p $(BUILDDIR)
 	@for dir in $(patsubst ./%,%,$(SRCDIRS)); do \
 		mkdir -p $(OBJDIR)/$$dir; \
 	done
@@ -43,11 +67,29 @@ $(BUILDDIR)/$(EXECUTABLE): $(OBJS)
 $(OBJDIR)/%.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC) -c $< -o $@
 	
+# -----------------------------------------------------------------------------
+# Test
+test: dir testdir $(EXEC_SERVER)
+
+testdir:
+	@mkdir -p $(BUILDDIR_TEST)
+	@for dir in $(patsubst ./%,%,$(TESTSRC)); do \
+		mkdir -p $(OBJDIR_TEST)/$$dir; \
+	done
+	
+$(EXEC_SERVER): $(BUILDDIR_TEST)/$(EXEC_SERVER)
+
+$(BUILDDIR_TEST)/$(EXEC_SERVER): $(OBJS_EXEC_SERVER)
+
+$(OBJS_EXEC_SERVER)/%.o: %.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC) -c $< -o $@
+ 
+# -----------------------------------------------------------------------------	
+
+# -----------------------------------------------------------------------------
 # Cleanup
-
-.PHONY: clean distclean
-
 clean:
 	rm -rf $(BUILDDIR)/*
 
 distclean: clean
+# -----------------------------------------------------------------------------

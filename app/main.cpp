@@ -11,10 +11,10 @@
 
 #include "mqtt/async_client.h"
 
-#include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
-#include <jsoncpp/json/writer.h>
+#include <json/json.h>
+#include <json/value.h>
+#include <json/reader.h>
+#include <json/writer.h>
 
 //#include <SFML/Window/Window.hpp>
 
@@ -166,18 +166,20 @@ int main(int argc, const char* argv[]) {
     ArgumentParser parser;
     parser.addArgument("--proto", 1);
     parser.addArgument("--ip", 1);
+    parser.addArgument("--addr", 1);
     parser.addArgument("--port", 1);
     parser.addArgument("--uuid", 1);
     parser.addArgument("--type", "+");
     parser.parse(argc, argv);
 
-    std::string proto = "", ip = "", uuid = "";
+    std::string proto = "", ip = "", addr = "", uuid = "";
     unsigned int port = 0;
     std::vector <std::string> type = {};
     try {
-//        proto = parser.retrieve <std::string> ("proto");
+        proto = parser.retrieve <std::string> ("proto");
         ip = parser.retrieve <std::string> ("ip");
-//        port = parser.retrieve <unsigned int> ("port");
+        addr = parser.retrieve <std::string> ("addr");
+        port = parser.retrieve <unsigned int> ("port");
     } catch (const std::out_of_range &e) {
         if (proto.empty() && ip.empty() && !port) {
             mqtt_conn_params = new ConParams<DefaultConParams>();

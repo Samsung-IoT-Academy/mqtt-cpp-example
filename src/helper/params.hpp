@@ -36,7 +36,8 @@ class ConParams
             __proto = def.getProto();
         }
 
-        virtual ~ConParams();
+        virtual ~ConParams() {
+        }
 
         void setProto(std::string proto) {
             __proto = proto;

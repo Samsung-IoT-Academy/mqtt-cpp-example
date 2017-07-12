@@ -36,7 +36,7 @@ OBJS_EXEC_SERVER	:= $(patsubst %.cpp,$(OBJDIR_TEST)/%.0,$(DIR_EXEC_SERVER))
 # Compiler and linker vars
 INC 		+= -Isrc
 CXXFLAGS 	+= -Wall -std=c++11
-LDLIBS 		+= -lpaho-mqttpp3 -ljsoncpp -lsfml-window
+LDLIBS 		+= -lpaho-mqttpp3 -ljsoncpp
 
 ifdef DEBUG
 	CPPFLAGS += -DDEBUG
@@ -45,6 +45,15 @@ else
 	CPPFLAGS += -D_NDEBUG
 	CXXFLAGS += -O2
 endif
+
+ifeq ($(DIST), "Ubuntu")
+	INC	+= -I/usr/include/jsoncpp
+endif
+ifeq ($(DIST), "openSUSE")
+	
+endif
+
+
 # Compiler and linker vars for test
 INC_TEST	+= $(INC) -Itest
 # -----------------------------------------------------------------------------

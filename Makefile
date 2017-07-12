@@ -49,6 +49,9 @@ endif
 ifeq ($(DIST), "Ubuntu")
 	INC	+= -I/usr/include/jsoncpp
 endif
+ifeq ($(DIST), "Fedora")
+	INC	+= -I/usr/include/jsoncpp
+endif
 ifeq ($(DIST), "openSUSE")
 	
 endif

@@ -179,7 +179,7 @@ int main(int argc, const char* argv[]) {
         proto = parser.retrieve <std::string> ("proto");
         ip = parser.retrieve <std::string> ("ip");
         addr = parser.retrieve <std::string> ("addr");
-        port = parser.retrieve <unsigned int> ("port");
+//        port = parser.retrieve <unsigned int> ("port");
     } catch (const std::out_of_range &e) {
         if (proto.empty() && ip.empty() && !port) {
             mqtt_conn_params = new ConParams<DefaultConParams>();

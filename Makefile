@@ -1,67 +1,43 @@
 # Path vars
 
-PRJ_NAME	= mqtt-cpp
+PRJ_NAME = mqtt-cpp
 
-BUILDPATH	?= ..
-BUILDPREFIX	?= build-
+BUILDPATH ?= ..
+BUILDPREFIX ?= build-
 
-BUILDDIR 	= $(BUILDPATH)/$(BUILDPREFIX)$(PRJ_NAME)
-OBJDIR 		= $(BUILDDIR)/obj
-SRCDIR 		= src
-APPDIR 		= app
-EXECUTABLE 	= cpp-mqtt
+SRCDIR = src
+APPDIR = app
 
-HDRSRC	:= $(SRCDIR)/helper/default_params.hpp
-APPSRC 	:= $(shell find $(APPDIR) -name '*.cpp')
-SOURCES := $(shell find $(SRCDIR) -name '*.cpp') $(APPSRC) $(HDRSRC)
-SRCDIRS := $(shell find . -not -path 'test' -name '*.cpp' -exec dirname {} \; | uniq)
-OBJS 	:= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SOURCES))
+BUILDDIR = $(BUILDPATH)/$(BUILDPREFIX)$(PRJ_NAME)
+OBJDIR = $(BUILDDIR)/obj
+SRCDIRS = 	app \
+			src \
+			src/mqtt \
+			src/mqtt/action_listeners
+EXECUTABLE = mqtt-cpp
 
-# -----------------------------------------------------------------------------
-# Variables for testing
-BUILDDIR_TEST	= $(BUILDDIR)
-OBJDIR_TEST		= $(BUILDDIR)/obj-test
-TESTDIR			= test
-EXEC_SERVER		= cpp-mqtt-server
+LIB_HEADERS = ./lib
+SRC_HEADERS = ./src
 
-TESTSRC				:= $(shell find $(TESTDIR) -not -path 'server' -name '*.cpp')
-TESTOBJS 			:= $(patsubst %.cpp,$(OBJDIR_TEST)/%.o,$(TESTSRC))
-DIR_EXEC_SERVER		:= $(TESTDIR)/server
-SRC_EXEC_SERVER		:= $(shell find $(DIR_EXEC_SERVER) -name '*.cpp') \
-	$(shell find $(SRCDIR) -name '*.cpp' -exec dirname {} \; | uniq)
-OBJS_EXEC_SERVER	:= $(patsubst %.cpp,$(OBJDIR_TEST)/%.0,$(DIR_EXEC_SERVER))
-# -----------------------------------------------------------------------------
+SRC += 	$(wildcard $(APPDIR)/*.cpp) \
+		$(wildcard $(SRCDIR)/*.cpp) \
+		$(wildcard $(SRCDIR)/*/*.cpp) \
+		$(wildcard $(SRCDIR)/*/*/*.cpp)
+OBJ := 	$(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC))
 
 # -----------------------------------------------------------------------------
 # Compiler and linker vars
-INC 		+= -Isrc
-CXXFLAGS 	+= -Wall -std=c++11
-LDLIBS 		+= -lpaho-mqttpp3 -ljsoncpp
+INC += $(INCLUDE_DIRS) -I$(SRC_HEADERS) -I$(LIB_HEADERS)
+CXXFLAGS += -Wall -std=c++11
+LDLIBS += -lpaho-mqttpp3 -lpaho-mqtt3as -ljsoncpp
 
-ifdef DEBUG
-	CPPFLAGS += -DDEBUG
-	CXXFLAGS += -g -O0
-else
-	CPPFLAGS += -D_NDEBUG
-	CXXFLAGS += -O2
-endif
-
-#ifeq ($(DIST), "Ubuntu")
-#	INC	+= -I/usr/include/jsoncpp
-#endif
-#ifeq ($(DIST), "Fedora")
-	INC	+= -I/usr/include/jsoncpp
-#endif
-#ifeq ($(DIST), "openSUSE")
-#	
-#endif
-
-
-# Compiler and linker vars for test
-INC_TEST	+= $(INC) -Itest
+debug: CXXFLAGS += -g -O0
+debug: CPPFLAGS += -DDEBUG
 # -----------------------------------------------------------------------------
 
-.PHONY: clean distclean all
+# -----------------------------------------------------------------------------
+
+.PHONY: clean distclean all debug
 
 all: dir $(EXECUTABLE)
 
@@ -73,30 +49,19 @@ dir:
 
 $(EXECUTABLE): $(BUILDDIR)/$(EXECUTABLE)
 
-$(BUILDDIR)/$(EXECUTABLE): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDLIBS)
+$(BUILDDIR)/$(EXECUTABLE): $(OBJ)
+	@echo $(OBJ)
+	$(CXX) $(CXXFLAGS) $(INC) $^ -o $@ $(LDLIBS)
 
-$(OBJDIR)/%.o: %.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC) -c $< -o $@
-	
-# -----------------------------------------------------------------------------
-# Test
-test: dir testdir $(EXEC_SERVER)
+$(OBJDIR)/src/%.o: $(SRCDIR)/%.cpp
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(INC) $< -o $@
 
-testdir:
-	@mkdir -p $(BUILDDIR_TEST)
-	@for dir in $(patsubst ./%,%,$(TESTSRC)); do \
-		mkdir -p $(OBJDIR_TEST)/$$dir; \
-	done
-	
-$(EXEC_SERVER): $(BUILDDIR_TEST)/$(EXEC_SERVER)
+$(OBJDIR)/app/%.o: $(APPDIR)/%.cpp
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(INC) $< -o $@
 
-$(BUILDDIR_TEST)/$(EXEC_SERVER): $(OBJS_EXEC_SERVER)
 
-$(OBJS_EXEC_SERVER)/%.o: %.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC) -c $< -o $@
- 
-# -----------------------------------------------------------------------------	
+debug: dir $(EXECUTABLE)
+
 
 # -----------------------------------------------------------------------------
 # Cleanup

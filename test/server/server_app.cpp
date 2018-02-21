@@ -33,6 +33,7 @@ const int QOS = 1;
 
 const auto TIMEOUT = std::chrono::seconds(10);
 
+
 //
 // A callback class for use with the main MQTT client.
 //

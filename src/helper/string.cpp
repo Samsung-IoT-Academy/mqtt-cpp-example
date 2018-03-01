@@ -1,17 +1,6 @@
-/*
- * json_helpers.hpp
- *
- *  Created on: 7 июл. 2017 г.
- *      Author: krautcat
- */
+#include "helper/string.hpp"
 
-#ifndef SRC_HELPER_JSON_HELPERS_HPP_
-#define SRC_HELPER_JSON_HELPERS_HPP_
-
-#include <vector>
-#include <string>
-
-namespace jsonHelper
+namespace StringHelper
 {
 std::vector <std::string> split(const std::string& str, const char& ch) {
     std::string next;
@@ -37,10 +26,10 @@ std::vector <std::string> split(const std::string& str, const char& ch) {
     return result;
 }
 
-std::string get_substr(const std::string& str, const char& ch,
-        const size_t num) {
+std::string get_substr(const std::string& str,
+                       const char& ch,
+                       const size_t num) {
     std::string temp = split(str, ch)[num];
     return temp;
 }
 }
-#endif /* SRC_HELPER_JSON_HELPERS_HPP_ */

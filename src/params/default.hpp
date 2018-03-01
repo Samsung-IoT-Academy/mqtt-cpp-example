@@ -7,25 +7,19 @@
 class DefaultConnParams
 {
     public:
+        DefaultConnParams();
+
         std::string proto;
         std::string ip;
         unsigned int port;
-
-        DefaultConnParams() {
-            proto = "tcp";
-            ip = "106.109.130.18";
-            port = 1883;
-        }
 };
 
 class DefaultTopicParams
 {
     public:
-        int qos;
+        DefaultTopicParams();
 
-        DefaultTopicParams() {
-            qos = 0;
-        }
+        int qos;
 };
 
 #endif // DEFAULTPARAMETERS_H

@@ -1,21 +1,22 @@
-#include <json/json.h>
-#include <json/value.h>
-#include <json/writer.h>
+#include "json/json.h"
+#include "json/value.h"
+#include "json/writer.h"
+#include "mqtt/delivery_token.h"
 
-#include "helper/json_helpers.hpp"
+#include "helper/string.hpp"
+#include "json.hpp"
 
-#include "messagehandler.hpp"
-
-MessageHandler::MessageHandler(mqtt::async_client &cli) :
-    client(cli)
+MessageHandlerJson::MessageHandlerJson(mqtt::async_client &cli) :
+    client(cli),
+    sub_listener()
 {
 
 }
 
-void MessageHandler::handle(std::shared_ptr<const mqtt::message> msg)
+void MessageHandlerJson::handle(std::shared_ptr<const mqtt::message> msg)
 {
     std::string topic = msg->get_topic();
-    std::vector <std::string> topic_strings = jsonHelper::split(topic, '/');
+    std::vector <std::string> topic_strings = StringHelper::split(topic, '/');
     std::string lora_deveui = topic_strings[2];
     std::string device = topic_strings[3];
 
@@ -49,15 +50,14 @@ void MessageHandler::handle(std::shared_ptr<const mqtt::message> msg)
                 break;
         }
         mqtt::message_ptr pubmsg = mqtt::make_message(topic, payload);
-        client.publish(pubmsg, nullptr, sub_listener);
-        while (!sub_listener.is_done()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::shared_ptr<mqtt::delivery_token> delivery_tok = client.publish(pubmsg, nullptr, sub_listener);
+        long check_timeout {5000L};
+        while (!delivery_tok->wait_for(check_timeout)) {
             std::cout << "Message didn't published!" << std::endl;
 
             std::vector<std::shared_ptr<mqtt::delivery_token>> toks = client.get_pending_delivery_tokens();
             if (!toks.empty()) {
                 std::cout << "Error: There are pending delivery tokens!" << std::endl;
-            } else {
                 for (auto t : toks) {
                     std::cout << (*t).get_message() << std::endl;
                 }

@@ -12,11 +12,11 @@
 
 #include "mqtt/async_client.h"
 
-class CustomActionListener  : public virtual mqtt::iaction_listener
+class SendMsgActionListener  : public virtual mqtt::iaction_listener
 {
 	public:
-        CustomActionListener();
-		virtual ~CustomActionListener();
+        SendMsgActionListener();
+        virtual ~SendMsgActionListener();
 
         bool is_done() const;
 

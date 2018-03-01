@@ -10,22 +10,23 @@
 
 #include "mqtt/async_client.h"
 
-#include "params.hpp"
+#include "params/params.hpp"
 #include "mqtt/customcallback.hpp"
-#include "mqtt/messagehandler.hpp"
+#include "mqtt/msg_handlers/imessagehandler.hpp"
 
 class CustomClient {
 	public:
-        CustomClient(ConnParams &mqtt_conn_params, TopicParams &mqtt_topic_params, std::string client_id);
+        CustomClient(Params& parameters,
+                     std::string client_id);
 		virtual ~CustomClient();
         void connect();
         void disconnect();
         void get_messages();
 	private:
-		mqtt::connect_options connOpts;
+        mqtt::connect_options conn_opts;
         mqtt::async_client async_client;
 
-        MessageHandler msg_handler;
+        IMessageHandler* msg_handler;
         CustomCallback cb;
 
         std::string server_addr;

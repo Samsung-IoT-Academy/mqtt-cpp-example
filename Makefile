@@ -12,8 +12,12 @@ BUILDDIR = $(BUILDPATH)/$(BUILDPREFIX)$(PRJ_NAME)
 OBJDIR = $(BUILDDIR)/obj
 SRCDIRS = 	app \
 			src \
+			src/helper \
+			src/params \
+			src/cli \
 			src/mqtt \
-			src/mqtt/action_listeners
+			src/mqtt/action_listeners \
+			src/mqtt/msg_handlers
 EXECUTABLE = mqtt-cpp
 
 LIB_HEADERS = ./lib

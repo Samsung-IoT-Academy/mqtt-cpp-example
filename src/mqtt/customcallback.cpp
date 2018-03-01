@@ -7,9 +7,8 @@
 
 #include <mqtt/customcallback.hpp>
 
-CustomCallback::CustomCallback(mqtt::async_client &cli_cl, MessageHandler &hndlr) :
-    cli(cli_cl),
-    msg_handler(hndlr)
+CustomCallback::CustomCallback(mqtt::async_client &cli_cl) :
+    cli(cli_cl)
 {
 }
 
@@ -17,10 +16,15 @@ CustomCallback::~CustomCallback() {
     // TODO Auto-generated destructor stub
 }
 
-void CustomCallback::set_connopts(mqtt::connect_options &opts)
+void CustomCallback::set_connopts(const mqtt::connect_options& opts)
 {
     connOpts = opts;
     return;
+}
+
+void CustomCallback::set_msg_handler(IMessageHandler* msg_hndlr)
+{
+    msg_handler = msg_hndlr;
 }
 
 void CustomCallback::connection_lost(const std::string& cause) {
@@ -39,7 +43,7 @@ void CustomCallback::message_arrived(mqtt::const_message_ptr msg) {
             << std::endl;
 
 
-    msg_handler.handle(msg);
+    msg_handler->handle(msg);
 }
 
 void CustomCallback::reconnect() {

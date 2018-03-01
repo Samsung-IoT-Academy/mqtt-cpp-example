@@ -7,23 +7,23 @@
 
 #include <mqtt/action_listeners/sendmsg.hpp>
 
-CustomActionListener::CustomActionListener()
+SendMsgActionListener::SendMsgActionListener()
 {
 }
 
-CustomActionListener::~CustomActionListener() {
+SendMsgActionListener::~SendMsgActionListener() {
     // TODO Auto-generated destructor stub
 }
 
-bool CustomActionListener::is_done() const
+bool SendMsgActionListener::is_done() const
 {
     return done_;
 }
 
-void CustomActionListener::on_failure(const mqtt::token &tok) {
+void SendMsgActionListener::on_failure(const mqtt::token& tok) {
     done_ = true;
 }
 
-void CustomActionListener::on_success(const mqtt::token &tok) {
+void SendMsgActionListener::on_success(const mqtt::token& tok) {
     done_ = true;
 }

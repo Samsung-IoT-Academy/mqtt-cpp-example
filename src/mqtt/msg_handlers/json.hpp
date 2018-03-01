@@ -7,21 +7,22 @@
 #include "mqtt/message.h"
 #include "json/reader.h"
 
+#include "mqtt/msg_handlers/imessagehandler.hpp"
 #include "mqtt/action_listeners/sendmsg.hpp"
 
-class MessageHandler
+class MessageHandlerJson :
+        public IMessageHandler
 {
     public:
-        MessageHandler(mqtt::async_client &cli);
+        MessageHandlerJson(mqtt::async_client &cli);
 
-        void handle(std::shared_ptr<const mqtt::message> msg);
+        virtual void handle(std::shared_ptr<const mqtt::message> msg);
 
     private:
-        mqtt::async_client &client;
+        mqtt::async_client& client;
 
         // An action listener to display the result of actions.
-        CustomActionListener sub_listener;
-
+        SendMsgActionListener sub_listener;
 
         Json::Reader json_reader;
 

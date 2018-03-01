@@ -5,33 +5,45 @@
  *      Author: krautcat
  */
 
-#include <mqtt/message.h>
+#include <sstream>
 
-#include <mqtt/customclient.hpp>
-#include <mqtt/action_listeners/connectbroker.hpp>
+#include "mqtt/message.h"
 
-CustomClient::CustomClient(ConnParams &mqtt_conn_params,
-                           TopicParams &mqtt_topic_params,
+#include "mqtt/customclient.hpp"
+#include "mqtt/action_listeners/connectbroker.hpp"
+#include "mqtt/msg_handlers/msghandlerfactory.hpp"
+
+
+CustomClient::CustomClient(Params& parameters,
                            std::string client_id) :
-    async_client(mqtt_conn_params.get_server_addr(), client_id),
-    msg_handler(async_client),
-    cb(async_client, msg_handler),
-    server_addr(mqtt_conn_params.get_server_addr())
+    async_client(parameters.connection_params.get_server_uri(),
+                 client_id),
+    cb(async_client),
+    server_addr(parameters.connection_params.get_server_uri())
 {
-	// TODO Auto-generated constructor stub
+    MessageHandlerFactory factory {};
+    msg_handler = factory.create(parameters.msg_handler_params.handler_type,
+                                 async_client);
 
-    connOpts.set_keep_alive_interval(20);
-    connOpts.set_clean_session(true);
-    cb.set_connopts(connOpts);
+    conn_opts.set_keep_alive_interval(20);
+    conn_opts.set_clean_session(true);
+    cb.set_msg_handler(msg_handler);
+    cb.set_connopts(conn_opts);
 
     connect();
 
     try {
-        async_client.subscribe(mqtt_topic_params.get_topics(),
-                               mqtt_topic_params.get_qos());
+        std::cout << "Subscribing to topics:" << std::endl;
+        std::vector<std::string> topics {parameters.topic_params.get_topics_strings()};
+        std::vector<int> qoses {parameters.topic_params.qos};
+        for (unsigned int i = 0; i < topics.size(); i++) {
+            std::cout << "\t" << topics[i] << " with QoS " << qoses[i] << std::endl;
+        }
+        async_client.subscribe(parameters.topic_params.get_topics(),
+                               parameters.topic_params.qos);
     } catch (const mqtt::exception &exp) {
         std::cerr << "Cannot subsribe to the following topics: " << std::endl;
-        for (auto a : mqtt_topic_params.get_topics_strings()) {
+        for (auto a : parameters.topic_params.get_topics_strings()) {
             std::cerr << "\t" << a;
         }
         std::cerr << std::endl;
@@ -44,6 +56,7 @@ CustomClient::CustomClient(ConnParams &mqtt_conn_params,
 
 CustomClient::~CustomClient() {
     disconnect();
+    delete msg_handler;
 }
 
 void CustomClient::connect() {
@@ -52,11 +65,18 @@ void CustomClient::connect() {
 
     ConnectBroker con_action_listener;
     try {
-        std::cout << "Connecting to the MQTT server..." << std::endl;
-        async_client.connect(connOpts, nullptr, con_action_listener)->wait();
+        std::cout << "Connecting to the MQTT server " << async_client.get_server_uri() << std::endl;
+        std::shared_ptr<mqtt::token> connect_token {async_client.connect(conn_opts, nullptr, con_action_listener)};
+        long wait_interval {5000L};
+        if (!connect_token->wait_for(wait_interval)) {
+            std::ostringstream oss {};
+            oss << "Cannot connect to server after " << (wait_interval / 1000)
+                << " seconds";
+            throw mqtt::exception(-1, oss.str());
+        }
     } catch (const mqtt::exception&) {
         std::cerr << "ERROR: Unable to connect to MQTT server: '"
-                << server_addr << "'" << std::endl;
+                  << server_addr << "'" << std::endl;
     }
 
     // Just block till user tells us to quit.

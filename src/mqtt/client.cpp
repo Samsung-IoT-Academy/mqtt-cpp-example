@@ -6,28 +6,31 @@
  */
 
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 #include "mqtt/message.h"
 
-#include "mqtt/customclient.hpp"
+#include "mqtt/client.hpp"
 #include "mqtt/action_listeners/connectbroker.hpp"
 #include "mqtt/msg_handlers/msghandlerfactory.hpp"
 
+namespace SamsungIoT {
+namespace mqttapp {
 
-CustomClient::CustomClient(Params& parameters,
-                           std::string client_id) :
+using namespace SamsungIoT::mqttapp;
+
+Client::Client(SamsungIoT::mqttapp::Params& parameters) :
     async_client(parameters.connection_params.get_server_uri(),
-                 client_id),
+                 parameters.connection_params.get_client_id()),
     cb(async_client),
     server_addr(parameters.connection_params.get_server_uri())
 {
-    MessageHandlerFactory factory {};
-    msg_handler = factory.create(parameters.msg_handler_params.handler_type,
-                                 async_client);
+    msg_handler = MessageHandlerFactory::create(parameters.msg_handler_params.handler_type,
+                                 &async_client);
 
     conn_opts.set_keep_alive_interval(20);
     conn_opts.set_clean_session(true);
-    cb.set_msg_handler(msg_handler);
     cb.set_connopts(conn_opts);
 
     connect();
@@ -54,17 +57,18 @@ CustomClient::CustomClient(Params& parameters,
 
 }
 
-CustomClient::~CustomClient() {
+Client::~Client() {
     disconnect();
     delete msg_handler;
+    std::cout << "Client destroying" << std::endl;
 }
 
-void CustomClient::connect() {
+void Client::connect() {
     // Start the connection.
     // When completed, the callback will subscribe to topic.
 
-    ConnectBroker con_action_listener;
     try {
+        ConnectBrokerActionListener con_action_listener;
         std::cout << "Connecting to the MQTT server " << async_client.get_server_uri() << std::endl;
         std::shared_ptr<mqtt::token> connect_token {async_client.connect(conn_opts, nullptr, con_action_listener)};
         long wait_interval {5000L};
@@ -82,23 +86,26 @@ void CustomClient::connect() {
     // Just block till user tells us to quit.
 }
 
-void CustomClient::disconnect()
+void Client::disconnect()
 {
     try {
         std::cout << "\nDisconnecting from the MQTT server..." << std::flush;
         async_client.disconnect()->wait();
         std::cout << "OK" << std::endl;
-    }
-    catch (const mqtt::exception& exc) {
+    } catch (const mqtt::exception& exc) {
         std::cerr << exc.what() << std::endl;
     }
 }
 
-void CustomClient::get_messages()
+void Client::get_messages()
 {
     async_client.start_consuming();
     std::shared_ptr<const mqtt::message> msg;
-    while (std::tolower(std::cin.get()) != 'q') { };
+    for (;;) {
+        msg = async_client.consume_message();
+        msg_handler->handle(msg);
+    }
 }
 
-
+}
+}

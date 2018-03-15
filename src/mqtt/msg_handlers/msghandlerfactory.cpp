@@ -1,6 +1,11 @@
 #include "mqtt/msg_handlers/msghandlerfactory.hpp"
 
-IMessageHandler* MessageHandlerFactory::create(HandlerType type, mqtt::async_client& client)
+namespace SamsungIoT {
+namespace mqttapp {
+
+using namespace SamsungIoT::mqttapp;
+
+IMessageHandler* MessageHandlerFactory::create(HandlerType type, mqtt::async_client* client)
 {
     switch (type) {
         case HandlerType::Raw :
@@ -10,4 +15,7 @@ IMessageHandler* MessageHandlerFactory::create(HandlerType type, mqtt::async_cli
         default:
             return new MessageHandlerRaw(client);
     }
+}
+
+}
 }

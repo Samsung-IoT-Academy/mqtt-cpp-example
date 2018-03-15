@@ -3,16 +3,22 @@
 
 #include <mqtt/iaction_listener.h>
 
-class ConnectBroker :
+namespace SamsungIoT {
+namespace mqttapp {
+
+class ConnectBrokerActionListener :
         public virtual mqtt::iaction_listener
 {
     public:
-        ConnectBroker();
-        ~ConnectBroker();
+        ConnectBrokerActionListener();
+        ~ConnectBrokerActionListener();
 
     private:
-        void on_failure(const mqtt::token &tok);
-        void on_success(const mqtt::token &tok);
+        void on_failure(const mqtt::token& tok);
+        void on_success(const mqtt::token& tok);
 };
+
+}
+}
 
 #endif // CONNECTIONCALLBACK_HPP

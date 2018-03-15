@@ -12,7 +12,11 @@
 
 #include "mqtt/async_client.h"
 
-class SendMsgActionListener  : public virtual mqtt::iaction_listener
+namespace SamsungIoT {
+namespace mqttapp {
+
+class SendMsgActionListener :
+        public virtual mqtt::iaction_listener
 {
 	public:
         SendMsgActionListener();
@@ -26,5 +30,8 @@ class SendMsgActionListener  : public virtual mqtt::iaction_listener
 
         std::atomic<bool> done_;
 };
+
+}
+}
 
 #endif /* SRC_MQTT_CUSTOMACTIONLISTENER_HPP_ */

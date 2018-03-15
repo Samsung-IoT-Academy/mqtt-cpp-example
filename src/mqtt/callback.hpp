@@ -12,12 +12,17 @@
 
 #include "mqtt/msg_handlers/imessagehandler.hpp"
 
-class CustomCallback :
+namespace SamsungIoT {
+namespace mqttapp {
+
+using namespace SamsungIoT::mqttapp;
+
+class Callback :
     public virtual mqtt::callback
 {
 	public:
-        CustomCallback(mqtt::async_client &cli_cl);
-		virtual ~CustomCallback();
+        Callback(mqtt::async_client& cli_cl);
+        virtual ~Callback();
 
         void set_connopts(const mqtt::connect_options &opts);
         void set_msg_handler(IMessageHandler *msg_hndlr);
@@ -32,12 +37,12 @@ class CustomCallback :
         // Options to use if we need to reconnect
         mqtt::connect_options connOpts;
 
-        // Message handler
-        IMessageHandler* msg_handler;
-
         void connection_lost(const std::string& cause) override;
         void message_arrived(mqtt::const_message_ptr msg) override;
         void reconnect();
 };
+
+}
+}
 
 #endif /* SRC_MQTT_CUSTOMCALLBACK_HPP_ */

@@ -8,20 +8,28 @@
 #include "mqtt/msg_handlers/imessagehandler.hpp"
 #include "mqtt/action_listeners/sendmsg.hpp"
 
+namespace SamsungIoT {
+namespace mqttapp {
+
+using namespace SamsungIoT::mqttapp;
+
 class MessageHandlerRaw :
         public IMessageHandler
 {
     public:
-        MessageHandlerRaw(mqtt::async_client& cli);
+        MessageHandlerRaw(mqtt::async_client* cli);
 
         virtual void handle(std::shared_ptr<const mqtt::message> msg);
 
     private:
-        mqtt::async_client &client;
+        mqtt::async_client* client;
 
         // An action listener to display the result of actions.
         SendMsgActionListener sub_listener;
 
 };
+
+}
+}
 
 #endif // MESSAGEHANDLERRAW_H

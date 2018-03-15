@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+namespace SamsungIoT {
+namespace mqttapp {
+
 class DefaultConnParams
 {
     public:
@@ -12,6 +15,8 @@ class DefaultConnParams
         std::string proto;
         std::string ip;
         unsigned int port;
+
+        std::string client_id;
 };
 
 class DefaultTopicParams
@@ -19,7 +24,12 @@ class DefaultTopicParams
     public:
         DefaultTopicParams();
 
+        std::string base;
+        std::string topic;
         int qos;
 };
+
+}
+}
 
 #endif // DEFAULTPARAMETERS_H

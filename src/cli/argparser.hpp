@@ -16,6 +16,11 @@
 #include "params/default.hpp"
 #include "params/params.hpp"
 
+namespace SamsungIoT {
+namespace mqttapp {
+
+using namespace SamsungIoT::mqttapp;
+
 class CliArgsParser {
     public:
         CliArgsParser();
@@ -24,12 +29,15 @@ class CliArgsParser {
         Params parse(int argc, const char* argv[]);
 
     private:
-        std::string parse_proto(const std::vector<std::string>& avaliable_protocols);
+        std::string parse_proto();
         std::string parse_ip();
         int parse_port();
+
         void parse_mqtt_topics(TopicParams& mqtt_topic_params);
         void parse_topics_param(TopicParams& mqtt_topic_params);
         void parse_device_param(TopicParams& mqtt_topic_params);
+
+        void parse_message_handler(MessageHandlerParams& msg_handler_params);
 
         args::ArgumentParser parser;
 
@@ -54,4 +62,7 @@ class CliArgsParser {
 
         args::HelpFlag help;
 };
+
+}
+}
 #endif /* SRC_CLIARGSPARSER_HPP_ */

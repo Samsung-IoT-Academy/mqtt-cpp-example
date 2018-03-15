@@ -7,6 +7,9 @@
 
 #include <mqtt/action_listeners/sendmsg.hpp>
 
+namespace SamsungIoT {
+namespace mqttapp {
+
 SendMsgActionListener::SendMsgActionListener()
 {
 }
@@ -26,4 +29,7 @@ void SendMsgActionListener::on_failure(const mqtt::token& tok) {
 
 void SendMsgActionListener::on_success(const mqtt::token& tok) {
     done_ = true;
+}
+
+}
 }

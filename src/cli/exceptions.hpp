@@ -4,6 +4,9 @@
 #include <exception>
 #include <string>
 
+namespace SamsungIoT {
+namespace mqttapp {
+
 class ArgParseException :
         public std::exception
 {
@@ -15,5 +18,8 @@ class ArgParseException :
     private:
         std::string reason;
 };
+
+}
+}
 
 #endif // ARGPARSE_HPP

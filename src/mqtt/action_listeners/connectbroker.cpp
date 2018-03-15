@@ -2,20 +2,25 @@
 
 #include "mqtt/action_listeners/connectbroker.hpp"
 
-ConnectBroker::ConnectBroker()
-{
+namespace SamsungIoT {
+namespace mqttapp {
 
+ConnectBrokerActionListener::ConnectBrokerActionListener()
+{
 }
 
-ConnectBroker::~ConnectBroker()
+ConnectBrokerActionListener::~ConnectBrokerActionListener()
 {
-
 }
 
-void ConnectBroker::on_failure(const mqtt::token& tok) {
+void ConnectBrokerActionListener::on_failure(const mqtt::token& tok) {
     std::cout << "Connection failed" << std::endl;
 }
 
-void ConnectBroker::on_success(const mqtt::token& tok) {
+void ConnectBrokerActionListener::on_success(const mqtt::token& tok) {
     std::cout << "Connection success" << std::endl;
 }
+
+}
+}
+

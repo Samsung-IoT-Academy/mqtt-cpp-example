@@ -4,9 +4,15 @@
 #include "mqtt/delivery_token.h"
 
 #include "helper/string.hpp"
-#include "json.hpp"
+#include "mqtt/msg_handlers/json.hpp"
 
-MessageHandlerJson::MessageHandlerJson(mqtt::async_client &cli) :
+namespace SamsungIoT {
+namespace mqttapp {
+
+using namespace SamsungIoT::mqttapp;
+using namespace SamsungIoT::helpers;
+
+MessageHandlerJson::MessageHandlerJson(mqtt::async_client* cli) :
     client(cli),
     sub_listener()
 {
@@ -16,7 +22,7 @@ MessageHandlerJson::MessageHandlerJson(mqtt::async_client &cli) :
 void MessageHandlerJson::handle(std::shared_ptr<const mqtt::message> msg)
 {
     std::string topic = msg->get_topic();
-    std::vector <std::string> topic_strings = StringHelper::split(topic, '/');
+    std::vector <std::string> topic_strings = split(topic, '/');
     std::string lora_deveui = topic_strings[2];
     std::string device = topic_strings[3];
 
@@ -50,19 +56,22 @@ void MessageHandlerJson::handle(std::shared_ptr<const mqtt::message> msg)
                 break;
         }
         mqtt::message_ptr pubmsg = mqtt::make_message(topic, payload);
-        std::shared_ptr<mqtt::delivery_token> delivery_tok = client.publish(pubmsg, nullptr, sub_listener);
+        std::shared_ptr<mqtt::delivery_token> delivery_tok = client->publish(pubmsg, nullptr, sub_listener);
         long check_timeout {5000L};
         while (!delivery_tok->wait_for(check_timeout)) {
             std::cout << "Message didn't published!" << std::endl;
 
-            std::vector<std::shared_ptr<mqtt::delivery_token>> toks = client.get_pending_delivery_tokens();
+            std::vector<std::shared_ptr<mqtt::delivery_token>> toks = client->get_pending_delivery_tokens();
             if (!toks.empty()) {
                 std::cout << "Error: There are pending delivery tokens!" << std::endl;
                 for (auto t : toks) {
-                    std::cout << (*t).get_message() << std::endl;
+                    std::cout << t->get_message() << std::endl;
                 }
             }
 
         }
     }
+}
+
+}
 }

@@ -21,7 +21,7 @@ Callback::~Callback() {
     // TODO Auto-generated destructor stub
 }
 
-void Callback::set_connopts(const mqtt::connect_options& opts) {
+void Callback::set_connopts(const mqtt::connect_options* opts) {
     connOpts = opts;
     return;
 }

@@ -12,7 +12,7 @@ namespace mqttapp {
 using namespace SamsungIoT::mqttapp;
 using namespace SamsungIoT::helpers;
 
-MessageHandlerJson::MessageHandlerJson(mqtt::async_client* cli) :
+MessageHandlerJson::MessageHandlerJson(mqtt::async_client& cli) :
     client(cli),
     sub_listener()
 {
@@ -56,12 +56,12 @@ void MessageHandlerJson::handle(std::shared_ptr<const mqtt::message> msg)
                 break;
         }
         mqtt::message_ptr pubmsg = mqtt::make_message(topic, payload);
-        std::shared_ptr<mqtt::delivery_token> delivery_tok = client->publish(pubmsg, nullptr, sub_listener);
+        std::shared_ptr<mqtt::delivery_token> delivery_tok = client.publish(pubmsg, nullptr, sub_listener);
         long check_timeout {5000L};
         while (!delivery_tok->wait_for(check_timeout)) {
             std::cout << "Message didn't published!" << std::endl;
 
-            std::vector<std::shared_ptr<mqtt::delivery_token>> toks = client->get_pending_delivery_tokens();
+            std::vector<std::shared_ptr<mqtt::delivery_token>> toks = client.get_pending_delivery_tokens();
             if (!toks.empty()) {
                 std::cout << "Error: There are pending delivery tokens!" << std::endl;
                 for (auto t : toks) {

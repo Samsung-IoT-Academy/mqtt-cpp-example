@@ -1,5 +1,11 @@
-#ifndef MESSAGEHANDLER_HPP
-#define MESSAGEHANDLER_HPP
+/**
+ * @file
+ * @brief Заголовочный файл с описанием обработчика JSON-сообщений.
+ * 
+ * Файл содержит определение класса обработчика сообщений в формате JSON.
+ */
+#ifndef MESSAGEHANDLERJSON_HPP
+#define MESSAGEHANDLERJSON_HPP
 
 #include <memory>
 
@@ -15,25 +21,38 @@ namespace mqttapp {
 
 using namespace SamsungIoT::mqttapp;
 
+/**
+ * @brief Обработчик JSON-сообщений
+ * 
+ * Класс реализует интерфейс обработчика сообщений и обработку JSON-сообщений.
+ */
 class MessageHandlerJson :
         public IMessageHandler
 {
     public:
-        MessageHandlerJson(mqtt::async_client* cli);
+    	/**
+    	 * Конструктор.
+    	 * @param cli Ссылка на асинхронного клиента.
+    	 */
+        MessageHandlerJson(mqtt::async_client& cli);
 
+        /**
+         * Обработчик сообщения.
+         * @param msg Умный указатель на сообщение.
+         */
         virtual void handle(std::shared_ptr<const mqtt::message> msg);
 
     private:
-        mqtt::async_client* client;
+        mqtt::async_client& client;			/**< Ссылка на асинхронного клиента */
 
-        // An action listener to display the result of actions.
-        SendMsgActionListener sub_listener;
+        SendMsgActionListener sub_listener;	/**< Слушатель события по отправке
+        										сообщения */
 
-        Json::Reader json_reader;
+        Json::Reader json_reader;			/**< Парсер JSON */
 
 };
 
 }
 }
 
-#endif // MESSAGEHANDLER_HPP
+#endif // MESSAGEHANDLERJSON_HPP

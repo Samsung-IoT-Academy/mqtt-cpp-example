@@ -6,7 +6,7 @@ namespace mqttapp {
 
 using namespace SamsungIoT::mqttapp;
 
-MessageHandlerRaw::MessageHandlerRaw(mqtt::async_client* cli) :
+MessageHandlerRaw::MessageHandlerRaw(mqtt::async_client& cli) :
     client(cli)
 {
 

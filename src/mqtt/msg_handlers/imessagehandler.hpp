@@ -1,3 +1,10 @@
+/**
+ * @file
+ * @brief Заголовочный файл с описанием интерфейса обработчиков сообщений.
+ * 
+ * Файл содержит определение класса IMessageHandler, являющегося интерфейсом
+ * для обработчиков сообщений.
+ */
 #ifndef IMESSAGEHANDLER_HPP
 #define IMESSAGEHANDLER_HPP
 
@@ -11,9 +18,22 @@
 namespace SamsungIoT {
 namespace mqttapp {
 
+/**
+ * @brief Интерфейсный класс для обработчиков сообщений
+ * 
+ * Интерфейсный класс, описывающий интерфейс обработки сообщений.
+ */
 class IMessageHandler {
     public:
+    	/**
+    	 * Конструктор.
+    	 */
         virtual ~IMessageHandler() {}
+
+        /**
+         * Обработчик сообщения.
+         * @param msg Умный указатель на сообщение.
+         */
         virtual void handle(std::shared_ptr<const mqtt::message> msg) = 0;
 };
 

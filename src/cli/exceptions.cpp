@@ -3,14 +3,24 @@
 namespace SamsungIoT {
 namespace mqttapp {
 
-ArgParseException::ArgParseException(const std::string &what)
+ArgParseException::ArgParseException(const std::string &what) :
+	std::invalid_argument(what)
 {
-    reason = what;
 }
 
-const char *ArgParseException::what() const noexcept
+ProtoParseException::ProtoParseException(const std::string &what) :
+	ArgParseException(what)
 {
-    return reason.c_str();
+}
+
+IpParseException::IpParseException(const std::string &what) :
+	ArgParseException(what)
+{
+}
+
+PortParseException::PortParseException(const std::string &what) :
+	ArgParseException(what)
+{
 }
 
 }

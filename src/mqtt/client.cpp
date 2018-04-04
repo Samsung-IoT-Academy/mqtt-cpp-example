@@ -27,11 +27,11 @@ Client::Client(SamsungIoT::mqttapp::Params& parameters) :
     server_addr(parameters.connection_params.get_server_uri())
 {
     msg_handler = MessageHandlerFactory::create(parameters.msg_handler_params.handler_type,
-                                 &async_client);
+                                async_client);
 
     conn_opts.set_keep_alive_interval(20);
     conn_opts.set_clean_session(true);
-    cb.set_connopts(conn_opts);
+    cb.set_connopts(&conn_opts);
 
     connect();
 
@@ -64,9 +64,6 @@ Client::~Client() {
 }
 
 void Client::connect() {
-    // Start the connection.
-    // When completed, the callback will subscribe to topic.
-
     try {
         ConnectBrokerActionListener con_action_listener;
         std::cout << "Connecting to the MQTT server " << async_client.get_server_uri() << std::endl;
@@ -78,12 +75,11 @@ void Client::connect() {
                 << " seconds";
             throw mqtt::exception(-1, oss.str());
         }
-    } catch (const mqtt::exception&) {
+    } catch (const mqtt::exception& e) {
         std::cerr << "ERROR: Unable to connect to MQTT server: '"
                   << server_addr << "'" << std::endl;
+        throw e;
     }
-
-    // Just block till user tells us to quit.
 }
 
 void Client::disconnect()
@@ -94,6 +90,7 @@ void Client::disconnect()
         std::cout << "OK" << std::endl;
     } catch (const mqtt::exception& exc) {
         std::cerr << exc.what() << std::endl;
+        throw exc;
     }
 }
 

@@ -80,7 +80,7 @@ void TopicParams::construct_topics(const std::string& deveui, const std::vector<
     }
 }
 
-void TopicParams::construct_topics(const std::vector<std::string>& deveuis, const std::vector<std::__cxx11::string>& sensors)
+void TopicParams::construct_topics(const std::vector<std::string>& deveuis, const std::vector<std::string>& sensors)
 {
     topics.clear();
     auto dev_it = deveuis.begin();
@@ -90,7 +90,14 @@ void TopicParams::construct_topics(const std::vector<std::string>& deveuis, cons
         ++dev_it;
         ++sen_it;
     }
+}
 
+void TopicParams::construct_topics_sensors(const std::vector<std::string>& sensors)
+{
+    topics.clear();
+    for (auto sen_it = sensors.begin(); sen_it != sensors.end(); sen_it++) {
+        topics.push_back(construct_topic("+", *sen_it));
+    }
 }
 
 void TopicParams::supplement_qoses(int length)
@@ -136,9 +143,9 @@ Params::Params() :
 }
 
 Params::Params(ConnParams& con, TopicParams& top, MessageHandlerParams& msg_hndlr) :
-    connection_params(con),
-    topic_params(top),
-    msg_handler_params(msg_hndlr)
+    connection_params(std::move(con)),
+    topic_params(std::move(top)),
+    msg_handler_params(std::move(msg_hndlr))
 {
 }
 

@@ -5,7 +5,7 @@ namespace mqttapp {
 
 using namespace SamsungIoT::mqttapp;
 
-IMessageHandler* MessageHandlerFactory::create(HandlerType type, mqtt::async_client* client)
+IMessageHandler* MessageHandlerFactory::create(HandlerType type, mqtt::async_client& client)
 {
     switch (type) {
         case HandlerType::Raw :

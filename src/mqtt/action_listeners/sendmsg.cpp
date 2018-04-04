@@ -14,8 +14,8 @@ SendMsgActionListener::SendMsgActionListener()
 {
 }
 
-SendMsgActionListener::~SendMsgActionListener() {
-    // TODO Auto-generated destructor stub
+SendMsgActionListener::~SendMsgActionListener()
+{
 }
 
 bool SendMsgActionListener::is_done() const

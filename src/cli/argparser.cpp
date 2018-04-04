@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "cli/exceptions.hpp"
 #include "cli/argparser.hpp"
 
 #include "mqtt/msg_handlers/msghandlerfactory.hpp"
@@ -48,13 +47,8 @@ CliArgsParser::CliArgsParser() :
             args::Group::Validators::DontCare
         ),
 
-    topics_based_group(
-            topic_group,
-            "Topics:",
-            args::Group::Validators::AtLeastOne
-        ),
     topics(
-            topics_based_group,
+            topic_group,
             "topics",
             "List of topics to connect",
             {"topics"}
@@ -63,7 +57,7 @@ CliArgsParser::CliArgsParser() :
     device_based_group(
             topic_group,
             "Device and sensors:",
-            args::Group::Validators::AtLeastOne
+            args::Group::Validators::AtMostOne
         ),
     device(
             device_based_group,
@@ -110,6 +104,7 @@ CliArgsParser::CliArgsParser() :
             {'h', "help"}
         )
 {
+    parser.LongSeparator(" ");
 }
 
 CliArgsParser::~CliArgsParser()
@@ -119,28 +114,26 @@ CliArgsParser::~CliArgsParser()
 Params CliArgsParser::parse(int argc, const char* argv[]) {
     try {
         parser.ParseCLI(argc, argv);
-    } catch (args::Help) {
+    } catch (args::Help e) {
         std::cout << parser;
+        throw;
     } catch (args::ParseError e) {
         std::cerr << e.what() << std::endl;
         std::cerr << parser;
+        throw;
     } catch (args::ValidationError e) {
-        std::cerr << e.what() << std::endl;
+        handle_validation_error();
         std::cerr << parser;
+        throw;
     }
 
-    if (help)
-        throw ArgParseException("Help");
-
     ConnParams mqtt_conn_params {};
-    mqtt_conn_params.set_proto(parse_proto());
-    mqtt_conn_params.set_ip(parse_ip());
-    mqtt_conn_params.set_port(parse_port());
-
+    parse_proto(mqtt_conn_params);
+    parse_ip(mqtt_conn_params);
+    parse_port(mqtt_conn_params);
 
     TopicParams mqtt_topic_params {};
     parse_mqtt_topics(mqtt_topic_params);
-
 
     MessageHandlerParams msg_handler_params {};
     parse_message_handler(msg_handler_params);
@@ -148,21 +141,25 @@ Params CliArgsParser::parse(int argc, const char* argv[]) {
     return Params(mqtt_conn_params, mqtt_topic_params, msg_handler_params);
 }
 
-std::string CliArgsParser::parse_proto()
+void CliArgsParser::parse_proto(ConnParams& mqtt_conn_params)
 {
     const std::vector<std::string>& avaliable = ConnParams::avaliable_protocols();
 
     if (proto) {
         std::string parsed_proto {args::get(proto)};
-        if (std::find(avaliable.begin(), avaliable.end(), parsed_proto) != avaliable.end())
+        if (std::find(avaliable.begin(), avaliable.end(), parsed_proto)
+            != avaliable.end()) 
         {
-            return parsed_proto;
+            mqtt_conn_params.set_proto(parsed_proto);
+        } 
+        else
+        {
+            throw std::invalid_argument("Unknown protocol");
         }
     }
-    return std::string {};
 }
 
-std::string CliArgsParser::parse_ip()
+void CliArgsParser::parse_ip(ConnParams& mqtt_conn_params)
 {
     if (ip) {
         std::string ip_cli {args::get(ip)};
@@ -175,9 +172,9 @@ std::string CliArgsParser::parse_ip()
            try {
                part = std::stoi(token);
            } catch (std::invalid_argument) {
-               throw std::invalid_argument("IP parts be numbers!");
+               throw std::invalid_argument("IP parts be numbers");
            } catch (std::out_of_range) {
-               throw std::invalid_argument("IP parts cannot contain such big numbers.");
+               throw std::invalid_argument("IP parts cannot contain such big numbers");
            }
 
            if (part > 255 || part < 0) {
@@ -192,37 +189,36 @@ std::string CliArgsParser::parse_ip()
                 join_stream << ".";
             join_stream << std::to_string(*t);
         }
-        return join_stream.str();
-    } else {
-        return std::string {};
+        mqtt_conn_params.set_ip(join_stream.str());
     }
 }
 
-int CliArgsParser::parse_port()
+void CliArgsParser::parse_port(ConnParams& mqtt_conn_params)
 {
     if (port) {
         int parsed_port {args::get(port)};
         if (parsed_port > 0 && parsed_port < 65536)
-            return parsed_port;
+            mqtt_conn_params.set_port(static_cast<unsigned int>(parsed_port));
         else 
-            throw std::invalid_argument("Port number must be between 0 and 65536.");
+            throw std::invalid_argument("Port number must be between 0 and 65536");
     }
-    return 0;
 }
 
-void CliArgsParser::parse_mqtt_topics(SamsungIoT::mqttapp::TopicParams& mqtt_topic_params)
+void CliArgsParser::parse_mqtt_topics(TopicParams& mqtt_topic_params)
 {
     if (topics) {
         parse_topics_param(mqtt_topic_params);
     } else if (device) {
         parse_device_param(mqtt_topic_params);
+    } else if (sensors_args) {
+        parse_sensors_param(mqtt_topic_params);
     } else {
         mqtt_topic_params.supplement_qoses(1);
         mqtt_topic_params.construct_topics();
     }
 }
 
-void CliArgsParser::parse_topics_param(SamsungIoT::mqttapp::TopicParams& mqtt_topic_params)
+void CliArgsParser::parse_topics_param(TopicParams& mqtt_topic_params)
 {
     std::vector<std::string> topics_cli = args::get(topics);
 
@@ -265,7 +261,7 @@ void CliArgsParser::parse_topics_param(SamsungIoT::mqttapp::TopicParams& mqtt_to
     mqtt_topic_params.construct_topics(deveuis_cli, sensors_cli);
 }
 
-void CliArgsParser::parse_device_param(SamsungIoT::mqttapp::TopicParams& mqtt_topic_params)
+void CliArgsParser::parse_device_param(TopicParams& mqtt_topic_params)
 {
     std::vector<std::string> sensors_cli {};
     std::string device_cli = args::get(device);
@@ -290,12 +286,35 @@ void CliArgsParser::parse_device_param(SamsungIoT::mqttapp::TopicParams& mqtt_to
     }
 }
 
+void CliArgsParser::parse_sensors_param(TopicParams& mqtt_topic_params)
+{
+    std::vector<std::string> sensors_cli {};
+    if (sensors_args)
+        sensors_cli = args::get(sensors_args);
+    if (qos)
+        mqtt_topic_params.qos = args::get(qos);
+    mqtt_topic_params.supplement_qoses(sensors_cli.size());
+    mqtt_topic_params.construct_topics_sensors(sensors_cli);
+}
+
 void CliArgsParser::parse_message_handler(MessageHandlerParams& msg_handler_params)
 {
     if (!json) {
         msg_handler_params.handler_type = MessageHandlerFactory::HandlerType::Raw;
     } else {
         msg_handler_params.handler_type = MessageHandlerFactory::HandlerType::JSON;
+    }
+}
+
+void CliArgsParser::handle_validation_error()
+{
+    if (topics && (device || sensors_args)) {
+        std::cerr << "Cannot supply topics params with devices!" << std::endl;
+    }
+
+    if (raw && json) {
+        std::cerr << "Cannot supply both raw and json message handlers!" <<
+            std::endl;
     }
 }
 

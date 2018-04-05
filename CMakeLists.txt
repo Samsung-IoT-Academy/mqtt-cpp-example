@@ -24,6 +24,11 @@ if(NOT Paho-C++_FOUND)
 	message(SEND_ERROR "Failed to find Pago C++ library")
 endif()
 
+find_package(Args-C++ REQUIRED)
+if(NOT Args-C++_FOUND)
+	message(SEND_ERROR "Failed to find Args C++ library")
+endif()
+
 use_cxx11()
 
 include_directories(${JsonCpp_INCLUDE_DIR})
@@ -47,7 +52,7 @@ target_link_libraries(mqtt-cpp jsoncpp paho-mqtt3as paho-mqttpp3)
 
 # Documentation
 # first we can indicate the documentation build as an option and set it to ON by default
-option(BUILD_DOC "Build documentation" ON)
+option(BUILD_DOC "Build documentation" OFF)
 
 if(BUILD_DOC)
 	# check if Doxygen is installed
@@ -68,6 +73,6 @@ if(BUILD_DOC)
 				COMMENT "Generating API documentation with Doxygen"
 				VERBATIM )
 	else(DOXYGEN_FOUND)
-		message(SEND_ERROR "Doxygen need to be installed to generate the doxygen documentation")
+		message(SEND_ERROR "Doxygen need to be installed to generate the Doxygen documentation")
 	endif(DOXYGEN_FOUND)
 endif(BUILD_DOC)
